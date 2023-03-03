@@ -48,6 +48,7 @@ def test_user_flow(admin_client: 'APIClient', anon_client: 'APIClient'):
         response.status_code == 200
      3. Проверить авторизацию для каждого нового пользователя. Необходимо используя анонимный клиент
         отправить POST-запрос на url f'/api/v1/users/{created_users_id}/' response.status_code == 200
+        (НАВЕРНО ИМЕЛОСЬ ВВИДУ НА /api/auth/login/)
      4. Удалить всех созданных пользователей, отправив DELETE-запрос на url f'/api/v1/users/{created_users_id}/',
         response.status_code == 204
 
@@ -65,4 +66,42 @@ def test_user_flow(admin_client: 'APIClient', anon_client: 'APIClient'):
 
     """
 
-    ...
+    users_count = 20
+    users_data = [
+        {
+            'username': f'user_{i}',
+            'password': f'password_{i}',
+            'email': f'email_{i}@mail.ru',
+        }
+        for i in range(users_count)
+    ]
+
+    # Создание новых пользователей
+    created_users_ids = []
+    for user in users_data:
+        response = admin_client.post('/api/v1/users/', data=user)
+        assert response.status_code == 201, response.content
+
+        data = response.json()
+        assert data['username'] == user['username']
+
+        created_users_ids.append(data['id'])
+
+    # Проверка количества созданных пользователей
+    response = admin_client.get('/api/v1/users/')
+    assert response.status_code == 200, response.content
+    data = response.json()
+    assert data['count'] == users_count
+
+    # Авторизация
+    for i in range(users_count):
+        response = anon_client.post(
+            '/api/auth/login/',
+            data={'username': f'user_{i}', 'password': f'password_{i}'}
+        )
+        assert response.status_code == 200
+
+    # Удаление пользователей
+    for created_user_id in created_users_ids:
+        response = admin_client.delete(f'/api/v1/users/{created_user_id}/')
+        assert response.status_code == 204
