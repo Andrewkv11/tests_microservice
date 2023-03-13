@@ -12,6 +12,8 @@ services:
   db:
     image: postgres:12-alpine
     container_name: db
+    depends_on:
+      - app_base
     volumes:
       - db:/var/lib/postgresql/data
     environment:
@@ -50,6 +52,9 @@ services:
     container_name: app_notifications
     command: bash -c "python3 main.py"
     restart: always
+    depends_on:
+      - app_base
+
 
     environment:
       APP_SERVICE_URL: amqp://guest:guest@amqp:5672/
@@ -65,8 +70,11 @@ services:
     command: bash -c "python3 main.py"
     restart: on-failure
     depends_on:
+      - app_base
       - amqp
       - db
+    volumes:
+      - ./api:/app/api
     environment:
       APP_API_PORT: 8000
       APP_API_HOST: http://gui

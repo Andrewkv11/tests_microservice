@@ -13,7 +13,6 @@ from tasks.models import File
 if TYPE_CHECKING:
     from tasks.apps import TasksConfig
 
-
 TEST_USER = 'test_user'
 
 
@@ -44,10 +43,25 @@ def admin():
     return user_admin
 
 
+# @pytest.fixture
+# def admin_client(admin, anon_client):
+#     anon_client.force_authenticate(admin)
+#     return anon_client
+
+"""
+Исправил также фикстуру admin_client. В первоначальном варианте, при использования обоих фикстур
+admin_client и anon_client в тесте, получается, что они возвращают один и тот же экземляр API_CLIENT, авторизованный 
+в статусе admin и ссылаются на один объект в памяти. Таким образом с помощью anon_client тоже можно было создать
+пользователей. В варианте ниже для admin создается свой клиент, и в тесте фикстуры передают разные экземпляры 
+API_CLEINT в статусах admin и anon
+"""
+
+
 @pytest.fixture
-def admin_client(admin, anon_client):
-    anon_client.force_authenticate(admin)
-    return anon_client
+def admin_client(admin):
+    admin_client = APIClient()
+    admin_client.force_authenticate(admin)
+    return admin_client
 
 
 @pytest.fixture
